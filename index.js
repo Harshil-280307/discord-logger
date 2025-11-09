@@ -82,13 +82,46 @@ client.once("ready", () => {
 
 
 
+// client.on("messageCreate", async (message) => {
+//   if (message.author.bot) return;
+
+//   if (!ALLOWED_CHANNELS.includes(message.channel.name)) return;
+
+//   const content = message.content.trim();
+//   if (!content) return; // ignores pure image messages
+
+//   const payload = {
+//     time: new Date().toISOString(),
+//     author: message.author.username,
+//     channel: message.channel.name,
+//     message: content
+//   };
+
+//   try {
+//     await axios.post(SHEET_WEBHOOK, payload);
+//     console.log(`✅ Logged: ${message.author.username} → ${content}`);
+//   } catch (error) {
+//     console.error("❌ Logging failed:", error.message);
+//   }
+// });
+
+
+
+
+
+
+
+
+
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
+  // Only log selected channels
   if (!ALLOWED_CHANNELS.includes(message.channel.name)) return;
 
-  const content = message.content.trim();
-  if (!content) return; // ignores pure image messages
+  // If no text content, ignore message (example: only image)
+  const content = message.content?.trim();
+  if (!content || content.length === 0) return;
 
   const payload = {
     time: new Date().toISOString(),
@@ -99,11 +132,16 @@ client.on("messageCreate", async (message) => {
 
   try {
     await axios.post(SHEET_WEBHOOK, payload);
-    console.log(`✅ Logged: ${message.author.username} → ${content}`);
+    console.log(`✅ Logged:`);
   } catch (error) {
     console.error("❌ Logging failed:", error.message);
   }
 });
+
+
+
+
+
 
 
 
