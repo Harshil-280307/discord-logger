@@ -4,17 +4,17 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
-// -------- EXPRESS KEEPALIVE SERVER ----------
+// ---------- EXPRESS KEEPALIVE SERVER ----------
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("✅ Discord Bot is running");
+  res.send("✅ Discord Logger Bot is running");
 });
 
 app.listen(PORT, () => console.log(`🌍 Keep-alive server running on port ${PORT}`));
 
-// -------- DISCORD BOT SETUP ----------
+// ---------- DISCORD BOT SETUP ----------
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -26,10 +26,13 @@ const client = new Client({
 const SHEET_WEBHOOK = process.env.SHEET_WEBHOOK;
 const TOKEN = process.env.BOT_TOKEN;
 
+// ✅ Allowed channels (ONLY these will be logged)
+const ALLOWED_CHANNELS = ["general", "support"];
+
 client.once("ready", () => {
   console.log(`🤖 Logged in as ${client.user.tag}`);
-  
-  const notice = `⚠️ Notice: This server's public messages are logged to Google Sheets for transparency. DMs are NOT logged.`;
+
+  const notice = `⚠️ Notice: This server's messages in #general and #support are logged for transparency. DMs and private channels are NOT logged.`;
 
   client.guilds.cache.forEach(guild => {
     const channel =
@@ -46,6 +49,8 @@ client.once("ready", () => {
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
+  if (!ALLOWED_CHANNELS.includes(message.channel.name)) return; // ❌ Skip other channels
+
   const payload = {
     time: new Date().toISOString(),
     author: message.author.username,
@@ -58,7 +63,7 @@ client.on("messageCreate", async (message) => {
 
   try {
     await axios.post(SHEET_WEBHOOK, payload);
-    console.log(`✅ Logged: ${message.author.username} -> ${message.content}`);
+    console.log(`✅ Logged: ${message.author.username} → ${message.channel.name}`);
   } catch (error) {
     console.error("❌ Logging failed:", error.message);
   }
