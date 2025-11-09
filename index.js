@@ -46,27 +46,68 @@ client.once("ready", () => {
   });
 });
 
+// client.on("messageCreate", async (message) => {
+//   if (message.author.bot) return;
+
+//   if (!ALLOWED_CHANNELS.includes(message.channel.name)) return; // ❌ Skip other channels
+
+//   const payload = {
+//     time: new Date().toISOString(),
+//     author: message.author.username,
+//     channel: message.channel.name,
+//     message: message.content || "(no text)",
+//     attachments: message.attachments.size > 0
+//       ? [...message.attachments.values()].map(a => a.url).join(", ")
+//       : null
+//   };
+
+//   try {
+//     await axios.post(SHEET_WEBHOOK, payload);
+//     console.log(`✅ Logged: ${message.author.username} → ${message.channel.name}`);
+//   } catch (error) {
+//     console.error("❌ Logging failed:", error.message);
+//   }
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  if (!ALLOWED_CHANNELS.includes(message.channel.name)) return; // ❌ Skip other channels
+  if (!ALLOWED_CHANNELS.includes(message.channel.name)) return;
+
+  const content = message.content.trim();
+  if (!content) return; // ignores pure image messages
 
   const payload = {
     time: new Date().toISOString(),
     author: message.author.username,
     channel: message.channel.name,
-    message: message.content || "(no text)",
-    attachments: message.attachments.size > 0
-      ? [...message.attachments.values()].map(a => a.url).join(", ")
-      : null
+    message: content
   };
 
   try {
     await axios.post(SHEET_WEBHOOK, payload);
-    console.log(`✅ Logged: ${message.author.username} → ${message.channel.name}`);
+    console.log(`✅ Logged: ${message.author.username} → ${content}`);
   } catch (error) {
     console.error("❌ Logging failed:", error.message);
   }
 });
+
+
+
+
+
 
 client.login(TOKEN);
