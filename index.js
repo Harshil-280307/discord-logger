@@ -12,7 +12,9 @@ app.get("/", (req, res) => {
   res.send("✅ Discord Logger Bot is running");
 });
 
-app.listen(PORT, () => console.log(`🌍 Keep-alive server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🌍 Keep-alive server running on port ${PORT}`)
+);
 
 // ---------- DISCORD BOT SETUP ----------
 const client = new Client({
@@ -26,7 +28,7 @@ const client = new Client({
 const SHEET_WEBHOOK = process.env.SHEET_WEBHOOK;
 const TOKEN = process.env.BOT_TOKEN;
 
-// ✅ Allowed channels (ONLY these will be logged)
+// Allowed channels
 const ALLOWED_CHANNELS = ["general", "support"];
 
 client.once("ready", () => {
@@ -34,97 +36,47 @@ client.once("ready", () => {
 
   const notice = `⚠️ Notice: This server's messages in #general and #support are logged for transparency. DMs and private channels are NOT logged.`;
 
-  client.guilds.cache.forEach(guild => {
+  client.guilds.cache.forEach((guild) => {
     const channel =
       guild.systemChannel ||
-      guild.channels.cache.find(c =>
-        c.type === 0 &&
-        c.permissionsFor(guild.members.me).has("SendMessages")
+      guild.channels.cache.find(
+        (c) =>
+          c.type === 0 &&
+          c.permissionsFor(guild.members.me).has("SendMessages")
       );
 
     if (channel) channel.send(notice);
   });
 });
 
-// client.on("messageCreate", async (message) => {
-//   if (message.author.bot) return;
-
-//   if (!ALLOWED_CHANNELS.includes(message.channel.name)) return; // ❌ Skip other channels
-
-//   const payload = {
-//     time: new Date().toISOString(),
-//     author: message.author.username,
-//     channel: message.channel.name,
-//     message: message.content || "(no text)",
-//     attachments: message.attachments.size > 0
-//       ? [...message.attachments.values()].map(a => a.url).join(", ")
-//       : null
-//   };
-
-//   try {
-//     await axios.post(SHEET_WEBHOOK, payload);
-//     console.log(`✅ Logged: ${message.author.username} → ${message.channel.name}`);
-//   } catch (error) {
-//     console.error("❌ Logging failed:", error.message);
-//   }
-// });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// client.on("messageCreate", async (message) => {
-//   if (message.author.bot) return;
-
-//   if (!ALLOWED_CHANNELS.includes(message.channel.name)) return;
-
-//   const content = message.content.trim();
-//   if (!content) return; // ignores pure image messages
-
-//   const payload = {
-//     time: new Date().toISOString(),
-//     author: message.author.username,
-//     channel: message.channel.name,
-//     message: content
-//   };
-
-//   try {
-//     await axios.post(SHEET_WEBHOOK, payload);
-//     console.log(`✅ Logged: ${message.author.username} → ${content}`);
-//   } catch (error) {
-//     console.error("❌ Logging failed:", error.message);
-//   }
-// });
-
-
-
-
-
-
-
-
-
+// ---------- MESSAGE LOGGER ----------
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  // Only log selected channels
+  // Only allowed channels
   if (!ALLOWED_CHANNELS.includes(message.channel.name)) return;
 
-  // If no text content, ignore message (example: only image)
+  // Ignore image-only messages
   const content = message.content?.trim();
   if (!content || content.length === 0) return;
 
+  // Format date + time: "10 / 11 / 2025 , 12 : 24 AM"
+  const now = new Date();
+
+  const date = now.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+
+  const timeString = now.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+
   const payload = {
-    time: new Date().toISOString(),
+    time: `${date} , ${timeString}`,
     author: message.author.username,
     channel: message.channel.name,
     message: content
@@ -132,20 +84,11 @@ client.on("messageCreate", async (message) => {
 
   try {
     await axios.post(SHEET_WEBHOOK, payload);
-    console.log(`✅ Logged:`);
+    console.log(`✅ Logged: ${message.author.username} → ${content}`);
   } catch (error) {
     console.error("❌ Logging failed:", error.message);
   }
 });
 
-
-
-
-
-
-
-
-
-
-
+// ---------- START BOT ----------
 client.login(TOKEN);
